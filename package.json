@@ -1,0 +1,23 @@
+{
+  "name": "megaharness",
+  "version": "1.0.0",
+  "description": "Unified VibeCode AI harness combining Antigravity, Claude Code, and Codex with Netlify AI Gateway and Arch Linux CLI support",
+  "type": "module",
+  "bin": {
+    "megaharness": "./cli/megaharness.mjs"
+  },
+  "scripts": {
+    "start": "node cli/megaharness.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@google/genai": "^1.0.0",
+    "@typesafe-ai/sdk": "*",
+    "hono": "^4.7.0",
+    "openai": "^4.100.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "license": "MIT"
+}

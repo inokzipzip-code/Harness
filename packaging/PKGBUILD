@@ -1,0 +1,20 @@
+# Maintainer: MegaHarness Contributors
+pkgname=megaharness
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Unified VibeCode AI harness combining Antigravity, Claude Code, and Codex with Netlify AI Gateway"
+arch=('any')
+url="https://github.com/inokzipzip-code/Harness"
+license=('MIT')
+depends=('nodejs>=22' 'npm')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/heads/main.tar.gz")
+sha256sums=('SKIP')
+
+package() {
+  cd "$srcdir/Harness-main"
+  install -d "$pkgdir/usr/lib/$pkgname"
+  cp -r cli shared package.json "$pkgdir/usr/lib/$pkgname/"
+  chmod +x "$pkgdir/usr/lib/$pkgname/cli/megaharness.mjs"
+  install -d "$pkgdir/usr/bin"
+  ln -s "/usr/lib/$pkgname/cli/megaharness.mjs" "$pkgdir/usr/bin/megaharness"
+}
