@@ -7,7 +7,7 @@ export function renderDashboardHtml() {
     catalog: MODEL_CATALOG,
     harnesses: HARNESSES,
     i18n: I18N,
-  });
+  }).replace(/</g, '\\u003c');
 
   return `<!DOCTYPE html>
 <html lang="ru">
@@ -421,6 +421,16 @@ export function renderDashboardHtml() {
         body.textContent = m.content;
         div.appendChild(meta);
         div.appendChild(body);
+        if (m.imageBase64) {
+          const img = document.createElement('img');
+          const mime = m.imageMimeType || 'image/png';
+          img.src = 'data:' + mime + ';base64,' + m.imageBase64;
+          img.alt = 'Generated image';
+          img.style.maxWidth = '100%';
+          img.style.borderRadius = '8px';
+          img.style.marginTop = '8px';
+          div.appendChild(img);
+        }
         els.messages.appendChild(div);
       }
       els.messages.scrollTop = els.messages.scrollHeight;
@@ -493,6 +503,10 @@ export function renderDashboardHtml() {
           assistantMsg.content = 'Error: ' + (data.error || res.statusText);
         } else {
           assistantMsg.content = data.reply || JSON.stringify(data, null, 2);
+          if (data.imageBase64) {
+            assistantMsg.imageBase64 = data.imageBase64;
+            assistantMsg.imageMimeType = data.imageMimeType || 'image/png';
+          }
         }
       } catch (err) {
         assistantMsg.content = 'Network error: ' + err.message;
@@ -500,6 +514,13 @@ export function renderDashboardHtml() {
       saveState();
       renderMessages();
     };
+
+    els.promptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        els.chatForm.requestSubmit();
+      }
+    });
 
     renderI18n();
     renderMessages();

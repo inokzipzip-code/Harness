@@ -72,25 +72,42 @@ async function sendChat(state, userText) {
   state.messages.push({ role: 'user', content: userText });
 
   const endpoint = state.endpoint.replace(/\/$/, '');
-  const res = await fetch(`${endpoint}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      harness: state.harness,
-      model: state.model,
-      lang: state.lang,
-      contextSummary: buildContextSummary(state),
-      messages: state.messages,
-    }),
-  });
+  let res;
+  let data;
+  try {
+    res = await fetch(`${endpoint}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        harness: state.harness,
+        model: state.model,
+        lang: state.lang,
+        contextSummary: buildContextSummary(state),
+        messages: state.messages,
+      }),
+    });
+    data = await res.json();
+  } catch (err) {
+    state.messages.pop();
+    throw err;
+  }
 
-  const data = await res.json();
   if (!res.ok) {
+    state.messages.pop();
     throw new Error(data.error || `HTTP ${res.status}`);
   }
 
-  state.messages.push({ role: 'assistant', content: data.reply || '' });
-  return data.reply || '';
+  let reply = data.reply || '';
+  if (data.imageBase64) {
+    const mime = data.imageMimeType || 'image/png';
+    const ext = mime.includes('jpeg') || mime.includes('jpg') ? 'jpg' : mime.includes('webp') ? 'webp' : 'png';
+    const imgFile = path.join(process.cwd(), `megaharness-image-${Date.now()}.${ext}`);
+    fs.writeFileSync(imgFile, Buffer.from(data.imageBase64, 'base64'));
+    reply = `${reply}\nSaved image: ${imgFile}`.trim();
+  }
+
+  state.messages.push({ role: 'assistant', content: reply });
+  return reply;
 }
 
 function listWorkspaceFiles(dir = process.cwd(), depth = 0, acc = []) {
