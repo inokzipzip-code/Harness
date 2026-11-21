@@ -124,12 +124,15 @@ app.post('/api/chat', async (c) => {
           tools: [{ type: 'image_generation' }],
         });
         const img = response.output?.find((item) => item.type === 'image_generation_call');
+        const imageBase64 =
+          typeof img?.result === 'string' ? img.result : img?.result?.data || null;
         return c.json({
           provider,
           model,
           harness,
-          reply: img ? '[Image generated via OpenAI Responses API]' : '[No image returned]',
-          imageBase64: img?.result?.data || null,
+          reply: imageBase64 ? '[Image generated via OpenAI Responses API]' : '[No image returned]',
+          imageBase64,
+          imageMimeType: 'image/png',
         });
       }
 
@@ -144,6 +147,12 @@ app.post('/api/chat', async (c) => {
     if (provider === 'gemini') {
       if (isImageModel(model)) {
         const { url, key } = getGatewayConfig();
+        if (!url || !key) {
+          return c.json(
+            { error: 'Netlify AI Gateway environment variables are not available in this runtime.' },
+            503,
+          );
+        }
         const imgClient = new GoogleGenAI({
           apiKey: key,
           httpOptions: { baseUrl: url },
@@ -160,6 +169,7 @@ app.post('/api/chat', async (c) => {
           harness,
           reply: part ? '[Image generated via Gemini Image model]' : response.text || '',
           imageBase64: part?.inlineData?.data || null,
+          imageMimeType: part?.inlineData?.mimeType || 'image/png',
         });
       }
 
