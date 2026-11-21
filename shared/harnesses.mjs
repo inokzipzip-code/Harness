@@ -62,6 +62,7 @@ export function buildSystemPrompt({ harnessId, lang = 'ru', contextSummary = '' 
   const parts = [
     harness.systemPrompt,
     `Target environment: Arch Linux VibeCode harness (MegaHarness).`,
+    `When creating or updating files in the user's workspace, output fenced code blocks with the exact header \`\`\`write:<relative/path/to/file>\n...file contents...\n\`\`\` so the MegaHarness CLI automatically writes them to disk.`,
     langInstruction,
   ];
 

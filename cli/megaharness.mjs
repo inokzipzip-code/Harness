@@ -106,8 +106,32 @@ async function sendChat(state, userText) {
     reply = `${reply}\nSaved image: ${imgFile}`.trim();
   }
 
+  const written = applyFileWrites(reply);
+  if (written.length > 0) {
+    reply = `${reply}\n\n${written.map((w) => `✎ Wrote ${w.path} (${w.bytes} bytes)`).join('\n')}`.trim();
+  }
+
   state.messages.push({ role: 'assistant', content: reply });
   return reply;
+}
+
+function applyFileWrites(text) {
+  const written = [];
+  const cwd = path.resolve(process.cwd());
+  const regex = /```write:([^\n\r]+)\r?\n([\s\S]*?)```/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const rawPath = match[1].trim();
+    const content = match[2];
+    const target = path.resolve(cwd, rawPath);
+    if (!target.startsWith(cwd + path.sep) && target !== cwd) {
+      continue;
+    }
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, content, 'utf8');
+    written.push({ path: path.relative(cwd, target), bytes: Buffer.byteLength(content, 'utf8') });
+  }
+  return written;
 }
 
 function listWorkspaceFiles(dir = process.cwd(), depth = 0, acc = []) {
